@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+uploads/resumes/*
+uploads/verifications/*
+uploads/logos/*
+!uploads/resumes/.gitkeep
+!uploads/verifications/.gitkeep
+!uploads/logos/.gitkeep
+*.log
