@@ -99,7 +99,6 @@ const CandidateSchema = new Schema<ICandidate>(
 );
 
 // Index for token lookups
-CandidateSchema.index({ verificationToken: 1 });
 CandidateSchema.index({ email: 1, jobId: 1 });
 
 const Candidate = mongoose.model<ICandidate>('Candidate', CandidateSchema);
