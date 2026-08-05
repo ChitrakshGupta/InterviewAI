@@ -93,6 +93,11 @@ export const scheduleCandidate = async (req: AuthRequest, res: Response): Promis
     });
   } catch (error) {
     console.error('Schedule candidate error:', error);
+    if (error && (error as any).name === 'ValidationError') {
+      const messages = Object.values((error as any).errors).map((err: any) => err.message);
+      res.status(400).json({ success: false, message: messages.join(', ') });
+      return;
+    }
     res.status(500).json({ success: false, message: 'Failed to schedule candidate' });
   }
 };
@@ -174,6 +179,7 @@ export const resendLink = async (req: AuthRequest, res: Response): Promise<void>
       },
     });
   } catch (error) {
+    console.error('Resend link error:', error);
     res.status(500).json({ success: false, message: 'Failed to resend link' });
   }
 };

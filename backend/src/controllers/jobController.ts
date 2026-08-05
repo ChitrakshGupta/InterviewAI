@@ -41,6 +41,11 @@ export const createJob = async (req: AuthRequest, res: Response): Promise<void> 
     });
   } catch (error) {
     console.error('Create job error:', error);
+    if (error && (error as any).name === 'ValidationError') {
+      const messages = Object.values((error as any).errors).map((err: any) => err.message);
+      res.status(400).json({ success: false, message: messages.join(', ') });
+      return;
+    }
     res.status(500).json({ success: false, message: 'Failed to create job' });
   }
 };
@@ -99,6 +104,12 @@ export const updateJob = async (req: AuthRequest, res: Response): Promise<void> 
     }
     res.json({ success: true, message: 'Job updated successfully', data: { job } });
   } catch (error) {
+    console.error('Update job error:', error);
+    if (error && (error as any).name === 'ValidationError') {
+      const messages = Object.values((error as any).errors).map((err: any) => err.message);
+      res.status(400).json({ success: false, message: messages.join(', ') });
+      return;
+    }
     res.status(500).json({ success: false, message: 'Failed to update job' });
   }
 };
