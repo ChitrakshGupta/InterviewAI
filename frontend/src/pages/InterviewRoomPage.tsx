@@ -1708,7 +1708,11 @@ const InterviewRoomPage: React.FC = () => {
 
           <button
             className="btn btn-secondary btn-full"
-            onClick={() => window.close()}
+            onClick={() => {
+              window.close();
+              // Fallback if browser blocks window.close()
+              setTimeout(() => navigate('/'), 300);
+            }}
             style={{ marginTop: '1rem' }}
           >
             Close Window

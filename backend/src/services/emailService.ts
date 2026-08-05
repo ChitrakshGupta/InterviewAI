@@ -193,7 +193,7 @@ export const sendInterviewInvitation = async (payload: EmailPayload): Promise<vo
   }
 
   const result = await resend.emails.send({
-    from: 'onboarding@resend.dev',
+    from: `"${payload.companyName} Interviews" <noreply@chitrakshgupta.tech>`,
     to: payload.to,
     subject,
     html: buildEmailHtml(payload),
