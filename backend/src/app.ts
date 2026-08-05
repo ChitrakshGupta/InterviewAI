@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import hrRoutes from './routes/hrRoutes';
 import jobRoutes from './routes/jobRoutes';
 import candidateRoutes from './routes/candidateRoutes';
+import interviewRoutes from './routes/interviewRoutes';
 import { SARVAM_LANGUAGES } from './models/Job';
 
 const app = express();
@@ -41,6 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/hr', hrRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/candidates', candidateRoutes);
+app.use('/api/interview', interviewRoutes);
 
 // 404 handler
 app.use((_req, res) => {

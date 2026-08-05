@@ -3,7 +3,7 @@
    Dark / Light mode — Clean, flat, functional
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Google+Sans:wght@400;500;600;700&display=swap');
 
 /* ============================================================
    DARK THEME (default)
@@ -1120,3 +1120,725 @@ canvas.hidden { display: none; }
   .grid-3 { grid-template-columns: 1fr 1fr; }
   .form-row { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+/* ============================================================
+   GOOGLE MEET INSPIRED INTERVIEW UI — Enhanced v2
+   ============================================================ */
+
+.gmeet-theme {
+  background: #202124 !important;
+  color: #e8eaed !important;
+  font-family: 'Google Sans', 'Inter', -apple-system, sans-serif !important;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Top Bar ─────────────────────────────────────────────── */
+.gmeet-topbar {
+  height: 56px;
+  min-height: 56px;
+  background: #202124;
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.gmeet-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+}
+
+/* ── Main Grid Container ─────────────────────────────────── */
+.gmeet-grid-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  padding: 0.875rem;
+  gap: 0.875rem;
+  height: calc(100vh - 56px - 80px);
+}
+
+/* ── 2-Tile Video Grid ───────────────────────────────────── */
+.gmeet-video-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Individual Tile ─────────────────────────────────────── */
+.gmeet-tile {
+  background: #2c2d30;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  border: 2px solid transparent;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  min-height: 0;
+}
+
+.gmeet-tile.speaking {
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 1px rgba(138, 180, 248, 0.2), 0 0 30px rgba(138, 180, 248, 0.25);
+}
+
+.gmeet-tile.face-warning {
+  border-color: #f28b82;
+  box-shadow: 0 0 0 1px rgba(242, 139, 130, 0.3), 0 0 30px rgba(242, 139, 130, 0.35);
+  animation: faceWarnBorder 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes faceWarnBorder {
+  from { box-shadow: 0 0 0 1px rgba(242, 139, 130, 0.3), 0 0 20px rgba(242, 139, 130, 0.3); }
+  to   { box-shadow: 0 0 0 2px rgba(242, 139, 130, 0.6), 0 0 40px rgba(242, 139, 130, 0.5); }
+}
+
+/* ── Tile Name Tag (bottom-left) ─────────────────────────── */
+.gmeet-tile-name {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.78125rem;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10;
+  max-width: calc(100% - 1.5rem);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ── Status Pills (inside tiles) ─────────────────────────── */
+.gmeet-status-pill {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  z-index: 15;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: pillFadeIn 0.2s ease;
+}
+
+@keyframes pillFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.gmeet-status-pill.speaking {
+  background: rgba(138, 180, 248, 0.2);
+  border: 1px solid rgba(138, 180, 248, 0.5);
+  color: #8ab4f8;
+}
+
+.gmeet-status-pill.listening {
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #34d399;
+}
+
+.gmeet-status-pill.processing {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+}
+
+.gmeet-status-pill .pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pillDotBlink 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes pillDotBlink {
+  from { opacity: 0.4; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1.2); }
+}
+
+/* ── AI Avatar / Orb Section ─────────────────────────────── */
+.gmeet-ai-avatar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+/* Outermost ambient glow ring — always present */
+.gmeet-ai-ambient {
+  position: absolute;
+  inset: -28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(138, 180, 248, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Pulsing rings — only shown when speaking */
+.gmeet-ai-ring {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  border: 2px solid rgba(138, 180, 248, 0.45);
+  animation: gmeetRingPulse 1.8s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.gmeet-ai-ring.ring-2 {
+  inset: -32px;
+  border-color: rgba(138, 180, 248, 0.22);
+  animation-delay: 0.45s;
+}
+
+.gmeet-ai-ring.ring-3 {
+  inset: -48px;
+  border-color: rgba(197, 138, 249, 0.12);
+  animation-delay: 0.9s;
+}
+
+@keyframes gmeetRingPulse {
+  0%   { transform: scale(0.92); opacity: 0.3; }
+  50%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0.3; }
+}
+
+/* Main AI Orb */
+.gmeet-ai-orb {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a73e8 0%, #8ab4f8 40%, #c58af9 70%, #f28b82 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  box-shadow:
+    0 0 0 6px rgba(138, 180, 248, 0.08),
+    0 0 40px rgba(138, 180, 248, 0.35),
+    0 0 80px rgba(197, 138, 249, 0.2);
+  z-index: 5;
+  position: relative;
+  animation: orbBreathing 4s ease-in-out infinite;
+  transition: box-shadow 0.3s ease;
+}
+
+.gmeet-ai-orb.speaking {
+  animation: orbSpeaking 0.8s ease-in-out infinite alternate;
+  box-shadow:
+    0 0 0 8px rgba(138, 180, 248, 0.15),
+    0 0 50px rgba(138, 180, 248, 0.55),
+    0 0 100px rgba(197, 138, 249, 0.35);
+}
+
+@keyframes orbBreathing {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes orbSpeaking {
+  from { transform: scale(0.96); }
+  to   { transform: scale(1.06); }
+}
+
+/* ── AI Audio Frequency Visualizer Bars ──────────────────── */
+.gmeet-ai-visualizer {
+  position: absolute;
+  bottom: 2.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 32px;
+  z-index: 12;
+}
+
+.gmeet-ai-visualizer .vbar {
+  width: 4px;
+  background: linear-gradient(to top, #8ab4f8, #c58af9);
+  border-radius: 2px;
+  min-height: 3px;
+  transition: height 0.08s ease;
+}
+
+/* ── Candidate Mic Volume Meter ──────────────────────────── */
+.gmeet-mic-meter {
+  position: absolute;
+  bottom: 2.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  z-index: 12;
+}
+
+.gmeet-mic-meter-fill {
+  height: 100%;
+  background: linear-gradient(to right, #34d399, #10b981);
+  border-radius: 2px;
+  transition: width 0.06s ease;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+
+/* ── AI Question Overlay (inside AI tile) ────────────────── */
+.gmeet-question-overlay {
+  position: absolute;
+  bottom: 3.25rem;
+  left: 0.875rem;
+  right: 0.875rem;
+  background: rgba(22, 23, 26, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  animation: overlaySlideUp 0.3s ease;
+  z-index: 11;
+}
+
+@keyframes overlaySlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.gmeet-question-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8ab4f8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.3rem;
+}
+
+.gmeet-question-text {
+  font-size: 0.875rem;
+  color: #e8eaed;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* ── AI Wave Bars (inline speaking anim) ─────────────────── */
+.gmeet-wave-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 14px;
+}
+
+.gmeet-wave-bar {
+  width: 3px;
+  height: 100%;
+  background: #8ab4f8;
+  border-radius: 1.5px;
+  animation: waveAnim 0.7s ease-in-out infinite alternate;
+}
+
+.gmeet-wave-bar:nth-child(2) { animation-delay: 0.1s; }
+.gmeet-wave-bar:nth-child(3) { animation-delay: 0.2s; }
+.gmeet-wave-bar:nth-child(4) { animation-delay: 0.3s; }
+
+@keyframes waveAnim {
+  from { transform: scaleY(0.25); opacity: 0.5; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/* ── Bottom Control Bar ──────────────────────────────────── */
+.gmeet-control-bar {
+  height: 80px;
+  min-height: 80px;
+  background: #202124;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+}
+
+.gmeet-controls-center {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.gmeet-btn-round {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #3c4043;
+  color: #e8eaed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+
+.gmeet-btn-round:hover:not(:disabled) {
+  background: #4a4d50;
+  transform: scale(1.08);
+}
+
+.gmeet-btn-round:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gmeet-btn-round.recording {
+  background: #ea4335;
+  box-shadow: 0 0 0 3px rgba(234, 67, 53, 0.25), 0 0 20px rgba(234, 67, 53, 0.5);
+  animation: pttPulse 0.9s ease-in-out infinite;
+}
+
+@keyframes pttPulse {
+  0%   { box-shadow: 0 0 0 3px rgba(234, 67, 53, 0.25), 0 0 16px rgba(234, 67, 53, 0.4); }
+  50%  { box-shadow: 0 0 0 6px rgba(234, 67, 53, 0.15), 0 0 28px rgba(234, 67, 53, 0.6); }
+  100% { box-shadow: 0 0 0 3px rgba(234, 67, 53, 0.25), 0 0 16px rgba(234, 67, 53, 0.4); }
+}
+
+.gmeet-btn-endcall {
+  background: #ea4335;
+  color: #ffffff;
+  padding: 0.6rem 1.375rem;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gmeet-btn-endcall:hover {
+  background: #c5221f;
+  transform: scale(1.03);
+}
+
+/* ── Side Panel (Transcript Drawer) ──────────────────────── */
+.gmeet-side-panel {
+  width: 340px;
+  min-width: 280px;
+  background: #2c2d30;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: drawerSlideIn 0.25s ease;
+  flex-shrink: 0;
+}
+
+@keyframes drawerSlideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.gmeet-panel-header {
+  padding: 1rem 1.125rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #e8eaed;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.gmeet-chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+.gmeet-chat-scroll::-webkit-scrollbar { width: 4px; }
+.gmeet-chat-scroll::-webkit-scrollbar-track { background: transparent; }
+.gmeet-chat-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+.gmeet-chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  animation: msgSlideIn 0.2s ease;
+}
+
+@keyframes msgSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.gmeet-chat-msg.ai { align-items: flex-start; }
+.gmeet-chat-msg.candidate { align-items: flex-end; }
+
+.gmeet-chat-role {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 0.5rem;
+}
+
+.gmeet-chat-msg.ai .gmeet-chat-role { color: #8ab4f8; }
+.gmeet-chat-msg.candidate .gmeet-chat-role { color: #81c995; }
+
+.gmeet-chat-bubble {
+  max-width: 92%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #e8eaed;
+}
+
+.gmeet-chat-msg.ai .gmeet-chat-bubble {
+  background: rgba(138, 180, 248, 0.1);
+  border: 1px solid rgba(138, 180, 248, 0.18);
+  border-radius: 4px 12px 12px 12px;
+}
+
+.gmeet-chat-msg.candidate .gmeet-chat-bubble {
+  background: rgba(129, 201, 149, 0.1);
+  border: 1px solid rgba(129, 201, 149, 0.18);
+  border-radius: 12px 4px 12px 12px;
+}
+
+.gmeet-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.5rem 0.875rem;
+  background: rgba(138, 180, 248, 0.08);
+  border: 1px solid rgba(138, 180, 248, 0.15);
+  border-radius: 4px 12px 12px 12px;
+}
+
+.gmeet-typing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8ab4f8;
+  animation: typingDot 1.2s ease-in-out infinite;
+}
+
+.gmeet-typing span:nth-child(2) { animation-delay: 0.15s; }
+.gmeet-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typingDot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50%       { opacity: 1; transform: translateY(-4px); }
+}
+
+/* ── Mode Switcher in control bar ────────────────────────── */
+.studio-mode-switcher {
+  display: flex;
+  background: #3c4043;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 99px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.studio-mode-switcher .mode-btn {
+  padding: 0.3125rem 0.875rem;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.studio-mode-switcher .mode-btn.active {
+  background: #8ab4f8;
+  color: #202124;
+  box-shadow: 0 2px 8px rgba(138, 180, 248, 0.4);
+}
+
+/* ── Live speech text below candidate tile ───────────────── */
+.gmeet-live-text {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 0.875rem;
+  right: 0.875rem;
+  background: rgba(22, 23, 26, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(129, 201, 149, 0.25);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #e8eaed;
+  line-height: 1.45;
+  font-style: italic;
+  z-index: 11;
+  animation: overlaySlideUp 0.2s ease;
+  max-height: 80px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* ── Error / warning toast in control bar ────────────────── */
+.gmeet-error-toast {
+  position: absolute;
+  top: -44px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(234, 67, 53, 0.15);
+  border: 1px solid rgba(234, 67, 53, 0.4);
+  color: #f28b82;
+  padding: 0.4rem 0.875rem;
+  border-radius: 20px;
+  font-size: 0.78125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  animation: toastSlideDown 0.25s ease;
+  pointer-events: none;
+}
+
+@keyframes toastSlideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .gmeet-video-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .gmeet-side-panel {
+    position: fixed;
+    right: 0;
+    top: 56px;
+    bottom: 80px;
+    z-index: 50;
+    border-radius: 12px 0 0 12px;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+    width: 300px;
+    animation: mobileDrawerSlide 0.25s ease;
+  }
+
+  @keyframes mobileDrawerSlide {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+  }
+
+  .gmeet-controls-center { gap: 0.5rem; }
+  .gmeet-btn-round { width: 42px; height: 42px; font-size: 1.1rem; }
+  .studio-mode-switcher .mode-btn { padding: 0.3rem 0.5rem; font-size: 0.65rem; }
+  .gmeet-title { font-size: 0.8125rem; max-width: 40%; }
+}
+
+@media (max-width: 600px) {
+  .gmeet-grid-container { padding: 0.5rem; gap: 0.5rem; }
+  .gmeet-control-bar { padding: 0 0.75rem; }
+  .gmeet-controls-center { gap: 0.35rem; }
+  .studio-mode-switcher { display: none; }
+}
+
+/* ── Keep older studio helpers (used in precheck/loading) ── */
+.studio-dark { background: #0d0f17 !important; }
+.studio-topbar { background: #11131c !important; border-bottom: 1px solid #1e2336 !important; }
+.studio-panel { background: #0d0f17 !important; border-color: #1e2336 !important; }
+.studio-card-glass {
+  background: rgba(17, 19, 28, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  color: #fff !important;
+}
+.studio-input { background: #161926 !important; border-color: #272d42 !important; color: #f8fafc !important; }
+.studio-btn { background: linear-gradient(135deg, #6366f1, #4f46e5) !important; border-color: #6366f1 !important; box-shadow: 0 4px 14px rgba(99,102,241,0.4) !important; }
+.studio-chat-header { background: #11131c !important; border-bottom: 1px solid #1e2336 !important; }
+.studio-current-q { background: #11131c !important; border-top: 1px solid #1e2336 !important; }
+
+.auto-speech-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  max-width: 520px;
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.auto-speech-pulse-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 12px #10b981;
+  animation: pulseDot 1.2s ease-in-out infinite alternate;
+  flex-shrink: 0;
+}
+
+@keyframes pulseDot {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
