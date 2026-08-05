@@ -16,6 +16,12 @@ export const SARVAM_LANGUAGES = [
 
 export type SarvamLanguageCode = typeof SARVAM_LANGUAGES[number]['code'];
 
+export interface IInterviewSettings {
+  maxQuestions: number;
+  maxFaceWarnings: number;
+  timeLimitMinutes: number;
+}
+
 export interface IJob extends Document {
   _id: mongoose.Types.ObjectId;
   hrId: mongoose.Types.ObjectId;
@@ -28,6 +34,7 @@ export interface IJob extends Document {
   language: SarvamLanguageCode;
   isActive: boolean;
   totalCandidates: number;
+  interviewSettings: IInterviewSettings;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,6 +85,11 @@ const JobSchema = new Schema<IJob>(
     totalCandidates: {
       type: Number,
       default: 0,
+    },
+    interviewSettings: {
+      maxQuestions: { type: Number, default: 8, min: 4, max: 20 },
+      maxFaceWarnings: { type: Number, default: 3, min: 1, max: 5 },
+      timeLimitMinutes: { type: Number, default: 20, min: 10, max: 60 },
     },
   },
   { timestamps: true }

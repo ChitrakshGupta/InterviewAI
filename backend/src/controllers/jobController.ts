@@ -14,6 +14,7 @@ export const createJob = async (req: AuthRequest, res: Response): Promise<void> 
       requirements,
       preferredQuestions,
       language,
+      interviewSettings,
     } = req.body;
 
     if (!title || !description) {
@@ -30,6 +31,7 @@ export const createJob = async (req: AuthRequest, res: Response): Promise<void> 
       requirements: requirements || '',
       preferredQuestions: Array.isArray(preferredQuestions) ? preferredQuestions : [],
       language: language || 'en-IN',
+      interviewSettings: interviewSettings || {},
     });
 
     res.status(201).json({

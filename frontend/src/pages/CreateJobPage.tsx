@@ -19,6 +19,7 @@ const CreateJobPage: React.FC = () => {
   const [form, setForm] = useState({
     title: '', department: '', experienceLevel: '',
     description: '', requirements: '', language: 'en-IN',
+    maxQuestions: 8, maxFaceWarnings: 3, timeLimitMinutes: 20,
   });
   const [questions, setQuestions] = useState<string[]>([]);
   const [qInput, setQInput] = useState('');
@@ -58,7 +59,20 @@ const CreateJobPage: React.FC = () => {
     }
     setSaving(true);
     try {
-      await jobApi.create({ ...form, preferredQuestions: questions });
+      await jobApi.create({
+        title: form.title,
+        department: form.department,
+        experienceLevel: form.experienceLevel,
+        description: form.description,
+        requirements: form.requirements,
+        language: form.language,
+        preferredQuestions: questions,
+        interviewSettings: {
+          maxQuestions: Number(form.maxQuestions) || 8,
+          maxFaceWarnings: Number(form.maxFaceWarnings) || 3,
+          timeLimitMinutes: Number(form.timeLimitMinutes) || 20,
+        },
+      } as unknown as Parameters<typeof jobApi.create>[0]);
       navigate('/jobs');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -173,6 +187,33 @@ const CreateJobPage: React.FC = () => {
                   <div className="lang-code">{lang.code}</div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Interview Anti-Cheat & Settings */}
+          <div className="card" style={{ marginBottom: '1.25rem' }}>
+            <div className="card-title" style={{ marginBottom: '0.25rem' }}>Interview & Anti-Cheat Settings</div>
+            <div className="card-desc" style={{ marginBottom: '1rem' }}>
+              Configure interview parameters and face detection warning limits.
+            </div>
+
+            <div className="form-row">
+              <div className="form-field">
+                <label className="form-label">Total Questions</label>
+                <input type="number" className="form-input" min={4} max={20} value={form.maxQuestions} onChange={set('maxQuestions')} />
+                <div className="form-hint">Number of Q&A turns (4 - 20)</div>
+              </div>
+              <div className="form-field">
+                <label className="form-label">Max Face Warnings</label>
+                <input type="number" className="form-input" min={1} max={5} value={form.maxFaceWarnings} onChange={set('maxFaceWarnings')} />
+                <div className="form-hint">Exit interview after N missing face alerts</div>
+              </div>
+            </div>
+
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label className="form-label">Time Limit (Minutes)</label>
+              <input type="number" className="form-input" min={10} max={60} value={form.timeLimitMinutes} onChange={set('timeLimitMinutes')} />
+              <div className="form-hint">Maximum interview duration (10 - 60 mins)</div>
             </div>
           </div>
 

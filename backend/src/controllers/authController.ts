@@ -4,7 +4,7 @@ import HR from '../models/HR';
 
 const generateToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any,
   });
 };
 
@@ -95,7 +95,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 // GET /api/auth/me
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
-    const hrId = (req as Express.Request & { hr: { _id: string } }).hr._id;
+    const hrId = (req as unknown as { hr: { _id: string } }).hr._id;
     const hr = await HR.findById(hrId);
     if (!hr) {
       res.status(404).json({ success: false, message: 'User not found' });

@@ -36,6 +36,8 @@ export interface ICandidate extends Document {
   verifiedAt?: Date;
   interviewStartedAt?: Date;
   interviewCompletedAt?: Date;
+  faceWarnings: number;
+  interviewEndReason?: 'COMPLETED' | 'FACE_VIOLATION' | 'TIME_EXCEEDED';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,6 +89,11 @@ const CandidateSchema = new Schema<ICandidate>(
     verifiedAt: Date,
     interviewStartedAt: Date,
     interviewCompletedAt: Date,
+    faceWarnings: { type: Number, default: 0 },
+    interviewEndReason: {
+      type: String,
+      enum: ['COMPLETED', 'FACE_VIOLATION', 'TIME_EXCEEDED'],
+    },
   },
   { timestamps: true }
 );

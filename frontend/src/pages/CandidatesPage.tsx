@@ -2,6 +2,14 @@ import React, { useEffect, useState } from 'react';
 import AppShell from '../components/AppShell';
 import { candidateApi } from '../api';
 
+interface EvaluationReport {
+  overallScore: number;
+  strengths: string[];
+  weaknesses: string[];
+  summary: string;
+  recommendation: string;
+}
+
 interface Candidate {
   _id: string;
   name: string;
@@ -10,6 +18,9 @@ interface Candidate {
   jobId: { title: string; language: string };
   createdAt: string;
   resumeOriginalName: string;
+  evaluationReport?: EvaluationReport;
+  faceWarnings?: number;
+  interviewEndReason?: string;
 }
 
 const STATUS_BADGE: Record<string, [string, string]> = {
@@ -26,6 +37,7 @@ const CandidatesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [resending, setResending] = useState<string | null>(null);
+  const [selectedEval, setSelectedEval] = useState<{ name: string; report: EvaluationReport; warnings?: number; reason?: string } | null>(null);
 
   useEffect(() => {
     candidateApi.list().then((r) => {
@@ -133,8 +145,21 @@ const CandidatesPage: React.FC = () => {
                             {resending === c._id ? 'Resending…' : 'Resend Link'}
                           </button>
                         )}
-                        {c.status === 'COMPLETED' && (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--success)' }}>✓ Done</span>
+                        {c.status === 'COMPLETED' && c.evaluationReport && (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => setSelectedEval({
+                              name: c.name,
+                              report: c.evaluationReport!,
+                              warnings: c.faceWarnings,
+                              reason: c.interviewEndReason,
+                            })}
+                          >
+                            View Report ({c.evaluationReport.overallScore}/10)
+                          </button>
+                        )}
+                        {c.status === 'COMPLETED' && !c.evaluationReport && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Evaluating…</span>
                         )}
                       </td>
                     </tr>
@@ -145,6 +170,53 @@ const CandidatesPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {selectedEval && (
+        <div className="face-warning-modal-overlay" onClick={() => setSelectedEval(null)}>
+          <div className="card" style={{ maxWidth: 500, width: '100%', background: 'var(--bg-subtle)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3>AI Evaluation: {selectedEval.name}</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setSelectedEval(null)}>✕</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', background: 'var(--bg)', padding: '0.75rem', borderRadius: 'var(--radius)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{selectedEval.report.overallScore}/10</div>
+              <div>
+                <span className={`badge ${selectedEval.report.recommendation === 'STRONGLY_RECOMMENDED' || selectedEval.report.recommendation === 'RECOMMENDED' ? 'badge-success' : 'badge-warning'}`}>
+                  {selectedEval.report.recommendation.replace('_', ' ')}
+                </span>
+                {selectedEval.warnings ? (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--warning)', marginTop: 2 }}>
+                    ⚠️ {selectedEval.warnings} Face Warning(s)
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>SUMMARY</strong>
+              <p style={{ marginTop: '0.25rem', lineHeight: 1.5 }}>{selectedEval.report.summary}</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div>
+                <strong style={{ fontSize: '0.75rem', color: 'var(--success)' }}>STRENGTHS</strong>
+                <ul style={{ paddingLeft: '1rem', marginTop: '0.25rem', fontSize: '0.8125rem' }}>
+                  {selectedEval.report.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                </ul>
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>WEAKNESSES</strong>
+                <ul style={{ paddingLeft: '1rem', marginTop: '0.25rem', fontSize: '0.8125rem' }}>
+                  {selectedEval.report.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                </ul>
+              </div>
+            </div>
+
+            <button className="btn btn-secondary btn-full" onClick={() => setSelectedEval(null)}>Close</button>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 };

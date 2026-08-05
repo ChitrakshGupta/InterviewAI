@@ -64,3 +64,27 @@ export const dashboardApi = {
 export const languagesApi = {
   list: () => axios.get(`${BASE}/languages`),
 };
+
+// ── Interview Session ─────────────────────────────────────
+export const interviewApi = {
+  start: (token: string) =>
+    axios.post(`${BASE}/interview/start/${token}`),
+
+  turn: (token: string, formData: FormData) =>
+    axios.post(`${BASE}/interview/turn/${token}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    }),
+
+  turnText: (token: string, text: string) =>
+    axios.post(`${BASE}/interview/turn/${token}`, { text }, { timeout: 60000 }),
+
+  end: (token: string, reason = 'COMPLETED') =>
+    axios.post(`${BASE}/interview/end/${token}`, { reason }),
+
+  status: (token: string) =>
+    axios.get(`${BASE}/interview/status/${token}`),
+
+  faceWarning: (token: string) =>
+    axios.post(`${BASE}/interview/face-warning/${token}`),
+};
