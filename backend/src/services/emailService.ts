@@ -21,8 +21,8 @@ const createTransporter = () => {
   }
 
   const config: TransporterConfig = {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
+    host: process.env.SMTP_HOST as string,
+    port: parseInt(process.env.SMTP_PORT as string),
     secure: process.env.SMTP_SECURE === 'true',
     auth: {
       user: smtpUser,

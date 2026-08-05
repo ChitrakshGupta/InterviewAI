@@ -64,7 +64,7 @@ export const scheduleCandidate = async (req: AuthRequest, res: Response): Promis
 
     // Get HR info for email
     const hr = await HR.findById(req.hr!._id);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL as string;
     const verificationLink = `${frontendUrl}/interview/verify/${verificationToken}`;
 
     // Send invitation email
@@ -154,7 +154,7 @@ export const resendLink = async (req: AuthRequest, res: Response): Promise<void>
     await candidate.save();
 
     const hr = await HR.findById(req.hr!._id);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL as string;
     const verificationLink = `${frontendUrl}/interview/verify/${newToken}`;
 
     await sendInterviewInvitation({

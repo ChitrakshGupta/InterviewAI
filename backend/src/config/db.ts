@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const connectDB = async (): Promise<void> => {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ai-interview';
+  const mongoUri = process.env.MONGODB_URI as string;
   
   try {
     const conn = await mongoose.connect(mongoUri);
