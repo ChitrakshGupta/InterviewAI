@@ -64,7 +64,7 @@ export const scheduleCandidate = async (req: AuthRequest, res: Response): Promis
 
     // Get HR info for email
     const hr = await HR.findById(req.hr!._id);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL as string;
     const verificationLink = `${frontendUrl}/interview/verify/${verificationToken}`;
 
     // Send invitation email
@@ -93,6 +93,11 @@ export const scheduleCandidate = async (req: AuthRequest, res: Response): Promis
     });
   } catch (error) {
     console.error('Schedule candidate error:', error);
+    if (error && (error as any).name === 'ValidationError') {
+      const messages = Object.values((error as any).errors).map((err: any) => err.message);
+      res.status(400).json({ success: false, message: messages.join(', ') });
+      return;
+    }
     res.status(500).json({ success: false, message: 'Failed to schedule candidate' });
   }
 };
@@ -154,7 +159,7 @@ export const resendLink = async (req: AuthRequest, res: Response): Promise<void>
     await candidate.save();
 
     const hr = await HR.findById(req.hr!._id);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL as string;
     const verificationLink = `${frontendUrl}/interview/verify/${newToken}`;
 
     await sendInterviewInvitation({
@@ -174,6 +179,7 @@ export const resendLink = async (req: AuthRequest, res: Response): Promise<void>
       },
     });
   } catch (error) {
+    console.error('Resend link error:', error);
     res.status(500).json({ success: false, message: 'Failed to resend link' });
   }
 };

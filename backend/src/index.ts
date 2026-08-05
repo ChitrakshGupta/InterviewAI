@@ -4,7 +4,7 @@ dotenv.config();
 import app from './app';
 import connectDB from './config/db';
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 const start = async () => {
   await connectDB();
@@ -15,7 +15,7 @@ const start = async () => {
     console.log(`   Server:    http://localhost:${PORT}`);
     console.log(`   API:       http://localhost:${PORT}/api`);
     console.log(`   Health:    http://localhost:${PORT}/api/health`);
-    console.log(`   Frontend:  ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+    console.log(`   Frontend:  ${process.env.FRONTEND_URL}`);
     console.log('═'.repeat(45) + '\n');
   });
 };

@@ -2,7 +2,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 
 const SARVAM_BASE = 'https://api.sarvam.ai';
-const API_KEY = process.env.SARVAM_API_KEY || '';
+const API_KEY = process.env.SARVAM_API_KEY as string;
 
 // ── Speech-to-Text ───────────────────────────────────────────────────────────
 export interface STTResult {

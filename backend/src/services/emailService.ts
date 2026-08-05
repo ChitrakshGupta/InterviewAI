@@ -1,39 +1,9 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-interface TransporterConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: {
-    user: string;
-    pass: string;
-  };
-}
+const RESEND_API_KEY = process.env.RESEND_API_KEY as string;
 
-const createTransporter = () => {
-  // If SMTP credentials are not configured, use ethereal test account behavior
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (!smtpUser || smtpUser === 'your_email@gmail.com') {
-    console.log('⚠️  SMTP not configured - emails will be logged to console');
-    return null;
-  }
-
-  const config: TransporterConfig = {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: smtpUser,
-      pass: smtpPass as string,
-    },
-  };
-
-  return nodemailer.createTransport(config);
-};
-
-const transporter = createTransporter();
+// Initialize Resend client
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 export interface EmailPayload {
   to: string;
@@ -210,10 +180,10 @@ const buildEmailHtml = (payload: EmailPayload): string => {
 export const sendInterviewInvitation = async (payload: EmailPayload): Promise<void> => {
   const subject = `Interview Invitation: ${payload.jobTitle} at ${payload.companyName}`;
 
-  if (!transporter) {
-    // Log to console when SMTP is not configured
+  if (!resend) {
+    // Log to console when Resend is not configured
     console.log('\n' + '═'.repeat(60));
-    console.log('📧  EMAIL (Console Mode — SMTP not configured)');
+    console.log('📧  EMAIL (Console Mode — Resend API Key not configured)');
     console.log('═'.repeat(60));
     console.log(`TO:      ${payload.to}`);
     console.log(`SUBJECT: ${subject}`);
@@ -222,12 +192,16 @@ export const sendInterviewInvitation = async (payload: EmailPayload): Promise<vo
     return;
   }
 
-  await transporter.sendMail({
-    from: `"${payload.companyName} Interviews" <${process.env.SMTP_USER}>`,
+  const result = await resend.emails.send({
+    from: 'onboarding@resend.dev',
     to: payload.to,
     subject,
     html: buildEmailHtml(payload),
   });
 
-  console.log(`✅ Interview invitation sent to ${payload.to}`);
+  if (result.error) {
+    throw new Error(`Resend email error: ${result.error.message}`);
+  }
+
+  console.log(`✅ Interview invitation sent to ${payload.to} via Resend`);
 };

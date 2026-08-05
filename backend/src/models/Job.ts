@@ -87,9 +87,9 @@ const JobSchema = new Schema<IJob>(
       default: 0,
     },
     interviewSettings: {
-      maxQuestions: { type: Number, default: 8, min: 4, max: 20 },
+      maxQuestions: { type: Number, default: 8, min: 1, max: 20 },
       maxFaceWarnings: { type: Number, default: 3, min: 1, max: 5 },
-      timeLimitMinutes: { type: Number, default: 20, min: 10, max: 60 },
+      timeLimitMinutes: { type: Number, default: 20, min: 1, max: 60 },
     },
   },
   { timestamps: true }
