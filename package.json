@@ -1,0 +1,10 @@
+{
+  "name": "ai-interview",
+  "version": "1.0.0",
+  "description": "AI Interview Platform",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  }
+}
