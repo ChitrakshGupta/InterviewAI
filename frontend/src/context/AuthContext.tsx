@@ -10,6 +10,7 @@ interface HR {
   companyName: string;
   companyLogo?: string;
   profileComplete: boolean;
+  isVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -17,9 +18,10 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, companyName?: string) => Promise<void>;
+  register: (name: string, email: string, password: string, companyName?: string) => Promise<{ requiresVerification: boolean; email: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  setAuthSession: (token: string, hr: HR) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -44,6 +46,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token]);
 
+  const setAuthSession = useCallback((t: string, h: HR) => {
+    setToken(t);
+    setHr(h);
+    localStorage.setItem('hireai_token', t);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${t}`;
+  }, []);
+
   const refreshUser = useCallback(async () => {
     if (!token) { setLoading(false); return; }
     try {
@@ -63,19 +72,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     const { data } = await axios.post(`${API}/auth/login`, { email, password });
     const { token: t, hr: h } = data.data;
-    setToken(t);
-    setHr(h);
-    localStorage.setItem('hireai_token', t);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${t}`;
+    setAuthSession(t, h);
   };
 
   const register = async (name: string, email: string, password: string, companyName = '') => {
     const { data } = await axios.post(`${API}/auth/register`, { name, email, password, companyName });
-    const { token: t, hr: h } = data.data;
-    setToken(t);
-    setHr(h);
-    localStorage.setItem('hireai_token', t);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${t}`;
+    return data.data;
   };
 
   const logout = () => {
@@ -86,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ hr, token, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ hr, token, loading, login, register, logout, refreshUser, setAuthSession }}>
       {children}
     </AuthContext.Provider>
   );

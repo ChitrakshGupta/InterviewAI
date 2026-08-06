@@ -64,6 +64,11 @@ export const startInterview = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    if (!candidate.jobId) {
+      res.status(404).json({ success: false, message: 'Associated job listing no longer exists' });
+      return;
+    }
+
     const job = candidate.jobId as NonNullable<typeof candidate.jobId>;
 
     // If already in progress (reconnect) — return current state
@@ -158,6 +163,11 @@ export const processTurn = async (req: Request, res: Response): Promise<void> =>
 
     if (candidate.status !== 'IN_PROGRESS') {
       res.status(400).json({ success: false, message: 'Interview is not in progress' });
+      return;
+    }
+
+    if (!candidate.jobId) {
+      res.status(404).json({ success: false, message: 'Associated job listing no longer exists' });
       return;
     }
 

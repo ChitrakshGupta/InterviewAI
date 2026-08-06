@@ -12,6 +12,7 @@ import CreateJobPage from './pages/CreateJobPage';
 import SchedulePage from './pages/SchedulePage';
 import CandidatesPage from './pages/CandidatesPage';
 import VerifyPage from './pages/VerifyPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import InterviewRoomPage from './pages/InterviewRoomPage';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             {/* Public */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
 
             {/* Candidate facing - public */}
             <Route path="/interview/verify/:token" element={<VerifyPage />} />

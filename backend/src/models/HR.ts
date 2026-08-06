@@ -15,6 +15,7 @@ export interface IHR extends Document {
   companySize?: string;
   location?: string;
   profileComplete: boolean;
+  isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -78,8 +79,21 @@ const HRSchema = new Schema<IHR>(
       type: Boolean,
       default: false,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
+);
+
+// Native MongoDB Partial TTL index to clean up unverified users after 24 hours (86400s)
+HRSchema.index(
+  { createdAt: 1 },
+  {
+    expireAfterSeconds: 86400,
+    partialFilterExpression: { isVerified: false },
+  }
 );
 
 // Hash password before save

@@ -11,6 +11,7 @@ const RegisterPage: React.FC = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', companyName: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -28,8 +29,8 @@ const RegisterPage: React.FC = () => {
     }
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password, form.companyName);
-      navigate('/profile');
+      const res = await register(form.name, form.email, form.password, form.companyName);
+      setSentEmail(res.email || form.email);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Registration failed. Please try again.');
@@ -49,16 +50,36 @@ const RegisterPage: React.FC = () => {
           <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
         </div>
 
-        <h1 className="auth-heading">Create account</h1>
-        <p className="auth-subheading">Set up your HR portal in seconds.</p>
-
-        {error && (
-          <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
-            <span>⚠</span> {error}
+        {sentEmail ? (
+          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📩</div>
+            <h2 style={{ fontSize: '1.25rem', color: '#e8eaed', marginBottom: '0.5rem' }}>Check your email</h2>
+            <p style={{ color: '#9aa0a6', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+              We sent a verification link to <strong style={{ color: '#8ab4f8' }}>{sentEmail}</strong>.
+              Click the link in the email to activate your account.
+            </p>
+            <div style={{
+              background: 'rgba(138, 180, 248, 0.08)', border: '1px solid rgba(138, 180, 248, 0.2)',
+              borderRadius: 10, padding: '0.875rem', fontSize: '0.8125rem', color: '#8ab4f8', marginBottom: '1.5rem',
+            }}>
+              ⏱ Verification link expires in 30 minutes.
+            </div>
+            <button className="btn btn-secondary btn-full" onClick={() => navigate('/login')}>
+              Back to Sign in
+            </button>
           </div>
-        )}
+        ) : (
+          <>
+            <h1 className="auth-heading">Create account</h1>
+            <p className="auth-subheading">Set up your HR portal in seconds.</p>
 
-        <form onSubmit={handleSubmit} noValidate>
+            {error && (
+              <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+                <span>⚠</span> {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} noValidate>
           <div className="form-row" style={{ marginBottom: '1rem' }}>
             <div className="form-field" style={{ marginBottom: 0 }}>
               <label className="form-label">Full name</label>
@@ -116,6 +137,8 @@ const RegisterPage: React.FC = () => {
         <p className="auth-footer-text">
           Already have an account? <Link to="/login">Sign in</Link>
         </p>
+          </>
+        )}
       </div>
     </div>
   );

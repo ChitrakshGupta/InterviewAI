@@ -205,3 +205,42 @@ export const sendInterviewInvitation = async (payload: EmailPayload): Promise<vo
 
   console.log(`✅ Interview invitation sent to ${payload.to} via Resend`);
 };
+
+export const sendHRVerificationEmail = async (
+  to: string,
+  name: string,
+  rawToken: string
+): Promise<void> => {
+  const frontendUrl = process.env.FRONTEND_URL as string;
+  const verifyLink = `${frontendUrl}/verify-email?token=${rawToken}`;
+  const subject = 'Verify your email address';
+
+  if (!resend) {
+    console.log('\n' + '═'.repeat(60));
+    console.log('📧  HR VERIFICATION EMAIL (Console Mode)');
+    console.log(`TO:   ${to}`);
+    console.log(`LINK: ${verifyLink}`);
+    console.log('═'.repeat(60) + '\n');
+    return;
+  }
+
+  const result = await resend.emails.send({
+    from: 'noreply@chitrakshgupta.tech',
+    to,
+    subject,
+    html: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#1a1b1e;color:#e8eaed;border-radius:12px;">
+        <h2 style="color:#8ab4f8;margin-bottom:12px;">Hello ${name},</h2>
+        <p style="color:#9aa0a6;font-size:15px;line-height:1.6;">Thank you for registering. Please click the button below to verify your email address and activate your account:</p>
+        <div style="margin:24px 0;">
+          <a href="${verifyLink}" style="display:inline-block;padding:12px 24px;background:#1a73e8;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;">Verify Email Address →</a>
+        </div>
+        <p style="color:#6b7280;font-size:13px;">This verification link expires in <strong>30 minutes</strong>.</p>
+      </div>
+    `,
+  });
+
+  if (result.error) {
+    throw new Error(`Resend verification error: ${result.error.message}`);
+  }
+};
