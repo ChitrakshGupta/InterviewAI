@@ -14,6 +14,7 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost:4173',
 ].filter(Boolean) as string[];
 
 const formattedOrigins = allowedOrigins.map((o) => o.replace(/\/$/, ''));
@@ -21,15 +22,22 @@ const formattedOrigins = allowedOrigins.map((o) => o.replace(/\/$/, ''));
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || formattedOrigins.includes(origin.replace(/\/$/, ''))) {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      const cleanOrigin = origin.replace(/\/$/, '');
+
+      // Allow explicitly listed origins or any Vercel deployment domain (*.vercel.app)
+      if (formattedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(null, false);
       }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    optionsSuccessStatus: 200,
   })
 );
 
