@@ -5,6 +5,8 @@ const BASE = import.meta.env.VITE_API_URL;
 // ── Auth ─────────────────────────────────────────────────
 export const authApi = {
   me: () => axios.get(`${BASE}/auth/me`),
+  verifyEmail: (token: string) => axios.post(`${BASE}/auth/verify-email`, { token }),
+  resendVerification: (email: string) => axios.post(`${BASE}/auth/resend-verification`, { email }),
 };
 
 // ── HR Profile ───────────────────────────────────────────

@@ -1,6 +1,16 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import HR from '../models/HR';
+import {
+  generateRawToken,
+  hashToken,
+  storeVerificationToken,
+  getVerificationUserId,
+  deleteVerificationToken,
+  setResendCooldown,
+  checkResendCooldown,
+} from '../services/tokenService';
+import { sendHRVerificationEmail } from '../services/emailService';
 
 const generateToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
@@ -24,26 +34,155 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const hr = await HR.create({ name, email, password, companyName: companyName || '' });
-    const token = generateToken(hr._id.toString());
+    // Step 1: Save user to MongoDB with isVerified: false and createdAt: new Date()
+    const hr = await HR.create({
+      name,
+      email,
+      password,
+      companyName: companyName || '',
+      isVerified: false,
+    });
+
+    const userId = hr._id.toString();
+
+    // Step 2: Generate CSPRNG rawToken & SHA-256 hashedToken
+    const rawToken = generateRawToken();
+    const hashedToken = hashToken(rawToken);
+
+    // Step 3: Store verify:<hashedToken> -> userId in Redis (30 mins EX 1800)
+    await storeVerificationToken(hashedToken, userId, 1800);
+
+    // Set user:<userId>:resend_cooldown -> 1 in Redis (2 mins EX 120)
+    await setResendCooldown(userId, 120);
+
+    // Step 4: Send Email containing rawToken link
+    await sendHRVerificationEmail(hr.email, hr.name, rawToken);
 
     res.status(201).json({
       success: true,
-      message: 'Account created successfully',
+      message: 'Account created! Please check your email to verify your account.',
       data: {
-        token,
-        hr: {
-          id: hr._id,
-          name: hr.name,
-          email: hr.email,
-          companyName: hr.companyName,
-          profileComplete: hr.profileComplete,
-        },
+        requiresVerification: true,
+        email: hr.email,
       },
     });
   } catch (error: unknown) {
     console.error('Register error:', error);
     res.status(500).json({ success: false, message: 'Server error during registration' });
+  }
+};
+
+// POST /api/auth/verify-email
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body; // rawToken from frontend
+
+    if (!token) {
+      res.status(400).json({ success: false, message: 'Verification token is required' });
+      return;
+    }
+
+    // Step 5: Backend hashes token & looks up verify:<hashedToken> in Redis
+    const hashedToken = hashToken(token);
+    const userId = await getVerificationUserId(hashedToken);
+
+    if (!userId) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token. Please request a new verification email.',
+      });
+      return;
+    }
+
+    const hr = await HR.findById(userId);
+    if (!hr) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    // Step 6: Update MongoDB isVerified = true, delete verify:<hashedToken> key from Redis
+    hr.isVerified = true;
+    await hr.save();
+
+    await deleteVerificationToken(hashedToken);
+
+    // Generate JWT token for successful login
+    const jwtToken = generateToken(hr._id.toString());
+
+    res.json({
+      success: true,
+      message: 'Email address verified successfully!',
+      data: {
+        token: jwtToken,
+        hr: {
+          id: hr._id,
+          name: hr.name,
+          email: hr.email,
+          companyName: hr.companyName,
+          companyLogo: hr.companyLogo,
+          profileComplete: hr.profileComplete,
+          isVerified: hr.isVerified,
+        },
+      },
+    });
+  } catch (error: unknown) {
+    console.error('Verify email error:', error);
+    res.status(500).json({ success: false, message: 'Server error during email verification' });
+  }
+};
+
+// POST /api/auth/resend-verification
+export const resendVerification = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ success: false, message: 'Email address is required' });
+      return;
+    }
+
+    const hr = await HR.findOne({ email });
+    if (!hr) {
+      // Don't leak existence
+      res.json({ success: true, message: 'If an account exists, a new verification link has been sent.' });
+      return;
+    }
+
+    if (hr.isVerified) {
+      res.status(400).json({ success: false, message: 'Account is already verified. Please log in.' });
+      return;
+    }
+
+    const userId = hr._id.toString();
+
+    // Check 2-minute resend cooldown
+    const isCoolingDown = await checkResendCooldown(userId);
+    if (isCoolingDown) {
+      res.status(429).json({
+        success: false,
+        message: 'Please wait 2 minutes before requesting another verification email.',
+      });
+      return;
+    }
+
+    // Generate new CSPRNG rawToken & hashedToken
+    const rawToken = generateRawToken();
+    const hashedToken = hashToken(rawToken);
+
+    // Store in Redis (30 mins EX 1800) & set 2-min cooldown (EX 120)
+    await storeVerificationToken(hashedToken, userId, 1800);
+    await setResendCooldown(userId, 120);
+
+    // Send email
+    await sendHRVerificationEmail(hr.email, hr.name, rawToken);
+
+    res.json({
+      success: true,
+      message: 'A new verification link has been sent to your email address.',
+    });
+  } catch (error: unknown) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ success: false, message: 'Server error during resend verification' });
   }
 };
 
@@ -69,6 +208,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Require email verification before logging in
+    if (!hr.isVerified) {
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        message: 'Please verify your email address before logging in.',
+        email: hr.email,
+      });
+      return;
+    }
+
     const token = generateToken(hr._id.toString());
 
     res.json({
@@ -83,6 +233,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           companyName: hr.companyName,
           companyLogo: hr.companyLogo,
           profileComplete: hr.profileComplete,
+          isVerified: hr.isVerified,
         },
       },
     });
