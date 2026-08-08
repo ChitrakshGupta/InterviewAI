@@ -7,6 +7,8 @@ export const authApi = {
   me: () => axios.get(`${BASE}/auth/me`),
   verifyEmail: (token: string) => axios.post(`${BASE}/auth/verify-email`, { token }),
   resendVerification: (email: string) => axios.post(`${BASE}/auth/resend-verification`, { email }),
+  setPassword: (tempToken: string, newPassword: string) =>
+    axios.post(`${BASE}/auth/set-password`, { tempToken, newPassword }),
 };
 
 // ── HR Profile ───────────────────────────────────────────
@@ -90,3 +92,14 @@ export const interviewApi = {
   faceWarning: (token: string) =>
     axios.post(`${BASE}/interview/face-warning/${token}`),
 };
+
+// ── IAM ──────────────────────────────────────────────────
+export const iamApi = {
+  invite: (payload: { name: string; email: string; permissions: string[] }) =>
+    axios.post(`${BASE}/iam/invite`, payload),
+  listMembers: () => axios.get(`${BASE}/iam/members`),
+  updatePermissions: (id: string, permissions: string[]) =>
+    axios.put(`${BASE}/iam/members/${id}/permissions`, { permissions }),
+  removeMember: (id: string) => axios.delete(`${BASE}/iam/members/${id}`),
+};
+

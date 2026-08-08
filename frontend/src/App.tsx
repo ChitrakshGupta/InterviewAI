@@ -13,6 +13,8 @@ import SchedulePage from './pages/SchedulePage';
 import CandidatesPage from './pages/CandidatesPage';
 import VerifyPage from './pages/VerifyPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import SetPasswordPage from './pages/SetPasswordPage';
+import TeamPage from './pages/TeamPage';
 import InterviewRoomPage from './pages/InterviewRoomPage';
 
 function App() {
@@ -25,6 +27,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/set-password" element={<SetPasswordPage />} />
 
             {/* Candidate facing - public */}
             <Route path="/interview/verify/:token" element={<VerifyPage />} />
@@ -37,6 +40,7 @@ function App() {
             <Route path="/jobs/new" element={<ProtectedRoute><CreateJobPage /></ProtectedRoute>} />
             <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
             <Route path="/candidates" element={<ProtectedRoute><CandidatesPage /></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
 
             {/* Default */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

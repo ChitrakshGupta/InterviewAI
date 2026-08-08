@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import HR, { IHR } from '../models/HR';
+import HR, { IHR, IAMPermission } from '../models/HR';
 
 export interface AuthRequest extends Request {
   hr?: IHR;
@@ -32,4 +32,45 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
   } catch (error) {
     res.status(401).json({ success: false, message: 'Not authorized, invalid token' });
   }
+};
+
+/**
+ * Middleware factory — requires a specific IAM permission.
+ * Owners bypass all permission checks.
+ * Members must have the flag in their permissions array.
+ */
+export const requirePermission = (flag: IAMPermission) => {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    const hr = req.hr;
+    if (!hr) {
+      res.status(401).json({ success: false, message: 'Not authorized' });
+      return;
+    }
+    // Owners have all permissions
+    if (hr.role === 'owner') {
+      next();
+      return;
+    }
+    // Members must have the specific permission
+    if (hr.permissions.includes(flag)) {
+      next();
+      return;
+    }
+    res.status(403).json({
+      success: false,
+      message: `You do not have permission to perform this action (requires: ${flag})`,
+    });
+  };
+};
+
+/**
+ * Middleware — requires owner role.
+ */
+export const requireOwner = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  const hr = req.hr;
+  if (!hr || hr.role !== 'owner') {
+    res.status(403).json({ success: false, message: 'Only the organization owner can perform this action' });
+    return;
+  }
+  next();
 };

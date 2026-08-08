@@ -1,6 +1,19 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+export type HRRole = 'owner' | 'member';
+
+export const IAM_PERMISSIONS = [
+  'view_jobs',
+  'manage_jobs',
+  'schedule_interviews',
+  'view_candidates',
+  'view_reports',
+  'manage_team',
+] as const;
+
+export type IAMPermission = typeof IAM_PERMISSIONS[number];
+
 export interface IHR extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
@@ -16,6 +29,11 @@ export interface IHR extends Document {
   location?: string;
   profileComplete: boolean;
   isVerified: boolean;
+  role: HRRole;
+  permissions: IAMPermission[];
+  parentHrId?: mongoose.Types.ObjectId;
+  organizationId?: mongoose.Types.ObjectId;
+  mustChangePassword: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -83,16 +101,40 @@ const HRSchema = new Schema<IHR>(
       type: Boolean,
       default: false,
     },
+    role: {
+      type: String,
+      enum: ['owner', 'member'],
+      default: 'owner',
+    },
+    permissions: {
+      type: [String],
+      default: [],
+    },
+    parentHrId: {
+      type: Schema.Types.ObjectId,
+      ref: 'HR',
+      default: null,
+    },
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'HR',
+      default: null,
+    },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
-// Native MongoDB Partial TTL index to clean up unverified users after 24 hours (86400s)
+// Native MongoDB Partial TTL index — cleans up self-registered unverified owners after 24h.
+// Invited members (role: 'member') are pre-verified so they are NOT affected.
 HRSchema.index(
   { createdAt: 1 },
   {
     expireAfterSeconds: 86400,
-    partialFilterExpression: { isVerified: false },
+    partialFilterExpression: { isVerified: false, role: 'owner' },
   }
 );
 

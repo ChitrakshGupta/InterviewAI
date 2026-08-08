@@ -2,6 +2,39 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import Job from '../models/Job';
 import Candidate from '../models/Candidate';
+import mongoose from 'mongoose';
+
+/**
+ * Returns the set of hrIds that belong to the same organization as the caller.
+ * For owners: all their own sub-HRs + themselves.
+ * For members: the owner + all sibling members (via organizationId).
+ *
+ * This ensures sub-HRs can see org-wide jobs/candidates, not just their own.
+ */
+const getOrgHrIds = async (hr: AuthRequest['hr']): Promise<mongoose.Types.ObjectId[]> => {
+  if (!hr) return [];
+
+  // Owners created before IAM: organizationId may be null — self-heal with their own _id
+  const orgId = hr.organizationId ?? hr._id;
+
+  if (hr.role === 'owner') {
+    // Return owner _id + all member _ids in this org
+    const { default: HR } = await import('../models/HR');
+    const members = await HR.find({ organizationId: orgId }).select('_id');
+    const ids = members.map((m) => m._id as mongoose.Types.ObjectId);
+    // Include the owner's own _id (in case org members only contain sub-HRs)
+    if (!ids.some((id) => id.equals(hr._id))) {
+      ids.unshift(hr._id);
+    }
+    return ids;
+  } else {
+    // Member: return all hrIds in the org (owner + other members)
+    const { default: HR } = await import('../models/HR');
+    const members = await HR.find({ organizationId: orgId }).select('_id');
+    // Also include the owner's _id (stored as organizationId for owner-scoped records)
+    return [...members.map((m) => m._id as mongoose.Types.ObjectId), orgId as mongoose.Types.ObjectId];
+  }
+};
 
 // POST /api/jobs
 export const createJob = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -22,8 +55,13 @@ export const createJob = async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
+    // Sub-HRs create jobs under the organization owner's hrId for unified scoping
+    const ownerHrId = req.hr!.role === 'owner'
+      ? req.hr!._id
+      : (req.hr!.organizationId ?? req.hr!._id);
+
     const job = await Job.create({
-      hrId: req.hr!._id,
+      hrId: ownerHrId,
       title,
       department: department || '',
       experienceLevel: experienceLevel || '',
@@ -53,7 +91,8 @@ export const createJob = async (req: AuthRequest, res: Response): Promise<void> 
 // GET /api/jobs
 export const getJobs = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const jobs = await Job.find({ hrId: req.hr!._id }).sort({ createdAt: -1 });
+    const orgHrIds = await getOrgHrIds(req.hr);
+    const jobs = await Job.find({ hrId: { $in: orgHrIds } }).sort({ createdAt: -1 });
 
     // Enrich with candidate counts
     const jobsWithCounts = await Promise.all(
@@ -78,7 +117,8 @@ export const getJobs = async (req: AuthRequest, res: Response): Promise<void> =>
 // GET /api/jobs/:id
 export const getJob = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const job = await Job.findOne({ _id: req.params.id, hrId: req.hr!._id });
+    const orgHrIds = await getOrgHrIds(req.hr);
+    const job = await Job.findOne({ _id: req.params.id, hrId: { $in: orgHrIds } });
     if (!job) {
       res.status(404).json({ success: false, message: 'Job not found' });
       return;
@@ -93,8 +133,9 @@ export const getJob = async (req: AuthRequest, res: Response): Promise<void> => 
 // PUT /api/jobs/:id
 export const updateJob = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const orgHrIds = await getOrgHrIds(req.hr);
     const job = await Job.findOneAndUpdate(
-      { _id: req.params.id, hrId: req.hr!._id },
+      { _id: req.params.id, hrId: { $in: orgHrIds } },
       req.body,
       { new: true }
     );
@@ -117,7 +158,8 @@ export const updateJob = async (req: AuthRequest, res: Response): Promise<void> 
 // DELETE /api/jobs/:id
 export const deleteJob = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const job = await Job.findOneAndDelete({ _id: req.params.id, hrId: req.hr!._id });
+    const orgHrIds = await getOrgHrIds(req.hr);
+    const job = await Job.findOneAndDelete({ _id: req.params.id, hrId: { $in: orgHrIds } });
     if (!job) {
       res.status(404).json({ success: false, message: 'Job not found' });
       return;
