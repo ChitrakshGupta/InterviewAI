@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const API = import.meta.env.VITE_API_URL;
 
-interface HR {
+export interface HR {
   id: string;
   name: string;
   email: string;
@@ -11,17 +11,21 @@ interface HR {
   companyLogo?: string;
   profileComplete: boolean;
   isVerified?: boolean;
+  role?: 'owner' | 'member';
+  permissions?: string[];
+  organizationId?: string;
 }
 
 interface AuthContextType {
   hr: HR | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ mustChangePassword?: boolean; tempToken?: string }>;
   register: (name: string, email: string, password: string, companyName?: string) => Promise<{ requiresVerification: boolean; email: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   setAuthSession: (token: string, hr: HR) => void;
+  hasPermission: (flag: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -71,8 +75,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     const { data } = await axios.post(`${API}/auth/login`, { email, password });
+    if (data.mustChangePassword) {
+      // Don't set JWT — return temp token for use on /set-password page
+      return { mustChangePassword: true, tempToken: data.tempToken };
+    }
     const { token: t, hr: h } = data.data;
     setAuthSession(t, h);
+    return {};
   };
 
   const register = async (name: string, email: string, password: string, companyName = '') => {
@@ -87,8 +96,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete axios.defaults.headers.common['Authorization'];
   };
 
+  /** Returns true if logged-in user is owner OR has the specific permission flag */
+  const hasPermission = (flag: string): boolean => {
+    if (!hr) return false;
+    if (hr.role === 'owner') return true;
+    return hr.permissions?.includes(flag) ?? false;
+  };
+
   return (
-    <AuthContext.Provider value={{ hr, token, loading, login, register, logout, refreshUser, setAuthSession }}>
+    <AuthContext.Provider value={{ hr, token, loading, login, register, logout, refreshUser, setAuthSession, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

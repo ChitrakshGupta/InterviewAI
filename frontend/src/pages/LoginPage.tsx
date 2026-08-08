@@ -24,7 +24,12 @@ const LoginPage: React.FC = () => {
     if (!email || !password) { setError('Email and password are required.'); return; }
     setLoading(true);
     try {
-      await login(email, password);
+      const result = await login(email, password);
+      if (result?.mustChangePassword && result.tempToken) {
+        sessionStorage.setItem('hireai_temp_token', result.tempToken);
+        navigate('/set-password');
+        return;
+      }
       navigate('/dashboard');
     } catch (err: unknown) {
       const data = (err as { response?: { data?: { message?: string; requiresVerification?: boolean } } })?.response?.data;

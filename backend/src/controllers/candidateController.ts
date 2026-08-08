@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/authMiddleware';
 import Candidate from '../models/Candidate';
 import Job from '../models/Job';
@@ -6,6 +7,18 @@ import HR from '../models/HR';
 import { sendInterviewInvitation } from '../services/emailService';
 import { uploadToCloudinary } from '../services/cloudinaryService';
 import { v4 as uuidv4 } from 'uuid';
+
+/** Returns all hrIds in the same organization as the caller */
+const getOrgHrIds = async (hr: AuthRequest['hr']): Promise<mongoose.Types.ObjectId[]> => {
+  if (!hr) return [];
+  const orgId = hr.organizationId ?? hr._id;
+  const members = await HR.find({ organizationId: orgId }).select('_id');
+  const ids = members.map((m) => m._id as mongoose.Types.ObjectId);
+  // Always include owner's _id (orgId itself)
+  const orgObjectId = orgId as mongoose.Types.ObjectId;
+  if (!ids.some((id) => id.equals(orgObjectId))) ids.push(orgObjectId);
+  return ids;
+};
 
 // POST /api/candidates/schedule
 export const scheduleCandidate = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -22,8 +35,9 @@ export const scheduleCandidate = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    // Verify job belongs to this HR
-    const job = await Job.findOne({ _id: jobId, hrId: req.hr!._id });
+    // Verify job belongs to this org (supports sub-HRs scheduling against owner's jobs)
+    const orgHrIds = await getOrgHrIds(req.hr);
+    const job = await Job.findOne({ _id: jobId, hrId: { $in: orgHrIds } });
     if (!job) {
       res.status(404).json({ success: false, message: 'Job not found' });
       return;
@@ -46,8 +60,13 @@ export const scheduleCandidate = async (req: AuthRequest, res: Response): Promis
     const verificationToken = uuidv4();
     const tokenExpiry = new Date(Date.now() + 48 * 60 * 60 * 1000);
 
+    // Store candidates under the org owner's hrId for unified scoping
+    const ownerHrId = req.hr!.role === 'owner'
+      ? req.hr!._id
+      : (req.hr!.organizationId ?? req.hr!._id);
+
     const candidate = await Candidate.create({
-      hrId: req.hr!._id,
+      hrId: ownerHrId,
       jobId,
       name,
       email,
@@ -106,7 +125,8 @@ export const scheduleCandidate = async (req: AuthRequest, res: Response): Promis
 export const getCandidates = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { jobId, status } = req.query;
-    const filter: Record<string, unknown> = { hrId: req.hr!._id };
+    const orgHrIds = await getOrgHrIds(req.hr);
+    const filter: Record<string, unknown> = { hrId: { $in: orgHrIds } };
     if (jobId) filter.jobId = jobId;
     if (status) filter.status = status;
 
@@ -123,7 +143,8 @@ export const getCandidates = async (req: AuthRequest, res: Response): Promise<vo
 // GET /api/candidates/:id
 export const getCandidate = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const candidate = await Candidate.findOne({ _id: req.params.id, hrId: req.hr!._id })
+    const orgHrIds = await getOrgHrIds(req.hr);
+    const candidate = await Candidate.findOne({ _id: req.params.id, hrId: { $in: orgHrIds } })
       .populate('jobId', 'title description language');
     if (!candidate) {
       res.status(404).json({ success: false, message: 'Candidate not found' });
@@ -138,7 +159,8 @@ export const getCandidate = async (req: AuthRequest, res: Response): Promise<voi
 // POST /api/candidates/:id/resend-link
 export const resendLink = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const candidate = await Candidate.findOne({ _id: req.params.id, hrId: req.hr!._id })
+    const orgHrIds = await getOrgHrIds(req.hr);
+    const candidate = await Candidate.findOne({ _id: req.params.id, hrId: { $in: orgHrIds } })
       .populate<{ jobId: { title: string } }>('jobId', 'title');
     if (!candidate) {
       res.status(404).json({ success: false, message: 'Candidate not found' });
@@ -321,13 +343,13 @@ export const uploadVerificationPhoto = async (req: Request, res: Response): Prom
 // GET /api/dashboard/stats
 export const getDashboardStats = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const hrId = req.hr!._id;
+    const orgHrIds = await getOrgHrIds(req.hr);
 
     const [totalJobs, totalCandidates, statusCounts] = await Promise.all([
-      Job.countDocuments({ hrId }),
-      Candidate.countDocuments({ hrId }),
+      Job.countDocuments({ hrId: { $in: orgHrIds } }),
+      Candidate.countDocuments({ hrId: { $in: orgHrIds } }),
       Candidate.aggregate([
-        { $match: { hrId } },
+        { $match: { hrId: { $in: orgHrIds } } },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
     ]);
@@ -335,7 +357,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
     const statusMap: Record<string, number> = {};
     statusCounts.forEach((s) => { statusMap[s._id] = s.count; });
 
-    const recentCandidates = await Candidate.find({ hrId })
+    const recentCandidates = await Candidate.find({ hrId: { $in: orgHrIds } })
       .populate('jobId', 'title')
       .sort({ createdAt: -1 })
       .limit(5);

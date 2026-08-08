@@ -34,14 +34,20 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Step 1: Save user to MongoDB with isVerified: false and createdAt: new Date()
+    // Step 1: Save owner account — organizationId will be set to own _id after creation
     const hr = await HR.create({
       name,
       email,
       password,
       companyName: companyName || '',
       isVerified: false,
+      role: 'owner',
+      permissions: [],
     });
+
+    // Self-reference as organization root
+    hr.organizationId = hr._id;
+    await hr.save();
 
     const userId = hr._id.toString();
 
@@ -122,6 +128,8 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
           companyLogo: hr.companyLogo,
           profileComplete: hr.profileComplete,
           isVerified: hr.isVerified,
+          role: hr.role,
+          permissions: hr.permissions,
         },
       },
     });
@@ -219,6 +227,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Sub-HR must change their temp password on first login
+    if (hr.mustChangePassword) {
+      // Issue a short-lived temp token only usable on /auth/set-password
+      const tempToken = jwt.sign(
+        { id: hr._id.toString(), scope: 'set_password' },
+        process.env.JWT_SECRET as string,
+        { expiresIn: '15m' }
+      );
+      res.status(200).json({
+        success: true,
+        mustChangePassword: true,
+        tempToken,
+        message: 'You must set a new password before continuing.',
+      });
+      return;
+    }
+
     const token = generateToken(hr._id.toString());
 
     res.json({
@@ -234,6 +259,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           companyLogo: hr.companyLogo,
           profileComplete: hr.profileComplete,
           isVerified: hr.isVerified,
+          role: hr.role,
+          permissions: hr.permissions,
+          organizationId: hr.organizationId,
         },
       },
     });
@@ -255,5 +283,72 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
     res.json({ success: true, data: { hr } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// POST /api/auth/set-password
+export const setFirstPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tempToken, newPassword } = req.body;
+
+    if (!tempToken || !newPassword) {
+      res.status(400).json({ success: false, message: 'Temp token and new password are required' });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+      return;
+    }
+
+    // Verify the short-lived temp token
+    let decoded: { id: string; scope: string };
+    try {
+      decoded = jwt.verify(tempToken, process.env.JWT_SECRET as string) as { id: string; scope: string };
+    } catch {
+      res.status(401).json({ success: false, message: 'Invalid or expired session. Please log in again.' });
+      return;
+    }
+
+    if (decoded.scope !== 'set_password') {
+      res.status(403).json({ success: false, message: 'Invalid token scope' });
+      return;
+    }
+
+    const hr = await HR.findById(decoded.id).select('+password');
+    if (!hr) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    // Update password — the pre-save hook will hash it
+    hr.password = newPassword;
+    hr.mustChangePassword = false;
+    await hr.save();
+
+    const token = generateToken(hr._id.toString());
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully.',
+      data: {
+        token,
+        hr: {
+          id: hr._id,
+          name: hr.name,
+          email: hr.email,
+          companyName: hr.companyName,
+          companyLogo: hr.companyLogo,
+          profileComplete: hr.profileComplete,
+          isVerified: hr.isVerified,
+          role: hr.role,
+          permissions: hr.permissions,
+          organizationId: hr.organizationId,
+        },
+      },
+    });
+  } catch (error: unknown) {
+    console.error('Set first password error:', error);
+    res.status(500).json({ success: false, message: 'Server error during password setup' });
   }
 };

@@ -244,3 +244,109 @@ export const sendHRVerificationEmail = async (
     throw new Error(`Resend verification error: ${result.error.message}`);
   }
 };
+
+// ── sendSubHRInviteEmail ───────────────────────────────────────────────────────
+export interface SubHRInvitePayload {
+  to: string;
+  name: string;
+  tempPassword: string;
+  inviterName: string;
+  companyName: string;
+  permissions: string[];
+}
+
+const PERMISSION_LABELS: Record<string, string> = {
+  view_jobs: '👁 View Jobs',
+  manage_jobs: '🛠 Manage Jobs',
+  schedule_interviews: '📅 Schedule Interviews',
+  view_candidates: '👤 View Candidates',
+  view_reports: '📊 View Reports',
+  manage_team: '🔑 Manage Team',
+};
+
+export const sendSubHRInviteEmail = async (payload: SubHRInvitePayload): Promise<void> => {
+  const { to, name, tempPassword, inviterName, companyName, permissions } = payload;
+  const frontendUrl = process.env.FRONTEND_URL as string;
+  const loginUrl = `${frontendUrl}/login`;
+  const subject = `You've been invited to join ${companyName} on HireAI`;
+
+  const permissionBadges = permissions
+    .map((p) => `<span style="display:inline-block;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:#a5b4fc;margin:3px;">${PERMISSION_LABELS[p] ?? p}</span>`)
+    .join('');
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Invitation</title>
+</head>
+<body style="margin:0;padding:40px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f13;color:#e2e8f0;">
+  <div style="max-width:560px;margin:0 auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(99,102,241,0.2);">
+    <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);padding:36px 40px;text-align:center;">
+      <div style="font-size:40px;margin-bottom:12px;">🤝</div>
+      <h1 style="margin:0;font-size:24px;font-weight:700;color:white;">You're invited!</h1>
+      <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">${inviterName} has added you to <strong>${companyName}</strong> on HireAI</p>
+    </div>
+    <div style="padding:36px 40px;">
+      <p style="font-size:17px;font-weight:600;color:#e2e8f0;margin:0 0 12px;">Hello, ${name}!</p>
+      <p style="color:#94a3b8;font-size:14px;line-height:1.7;margin:0 0 24px;">
+        You have been invited to join the <strong style="color:#e2e8f0;">${companyName}</strong> team. Use the credentials below to log in for the first time. You will be asked to set a new password after logging in.
+      </p>
+
+      <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:20px;margin-bottom:24px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6366f1;font-weight:600;margin-bottom:14px;">🔐 Your Login Credentials</div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(99,102,241,0.1);">
+          <span style="color:#64748b;font-size:14px;">Email</span>
+          <span style="color:#e2e8f0;font-size:14px;font-weight:500;">${to}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#64748b;font-size:14px;">Temporary Password</span>
+          <span style="color:#a5b4fc;font-size:14px;font-weight:700;letter-spacing:1px;font-family:monospace;">${tempPassword}</span>
+        </div>
+      </div>
+
+      ${permissions.length > 0 ? `
+      <div style="margin-bottom:24px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6366f1;font-weight:600;margin-bottom:10px;">✅ Your Permissions</div>
+        <div>${permissionBadges}</div>
+      </div>` : ''}
+
+      <a href="${loginUrl}" style="display:block;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);color:white;text-decoration:none;text-align:center;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;margin-bottom:20px;">
+        🚀 Log in to HireAI →
+      </a>
+
+      <p style="font-size:12px;color:#475569;text-align:center;">You will be asked to set a new password on your first login.</p>
+    </div>
+    <div style="padding:20px 40px;border-top:1px solid rgba(99,102,241,0.1);text-align:center;">
+      <p style="font-size:12px;color:#475569;margin:0;">© ${new Date().getFullYear()} ${companyName}. This is an automated message — please do not reply.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  if (!resend) {
+    console.log('\n' + '═'.repeat(60));
+    console.log('📧  SUB-HR INVITE EMAIL (Console Mode)');
+    console.log(`TO:       ${to}`);
+    console.log(`PASSWORD: ${tempPassword}`);
+    console.log(`PERMS:    ${permissions.join(', ')}`);
+    console.log('═'.repeat(60) + '\n');
+    return;
+  }
+
+  const result = await resend.emails.send({
+    from: 'noreply@chitrakshgupta.tech',
+    to,
+    subject,
+    html,
+  });
+
+  if (result.error) {
+    throw new Error(`Resend invite error: ${result.error.message}`);
+  }
+
+  console.log(`✅ Invite email sent to ${to} via Resend`);
+};
+
