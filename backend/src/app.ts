@@ -7,6 +7,7 @@ import jobRoutes from './routes/jobRoutes';
 import candidateRoutes from './routes/candidateRoutes';
 import interviewRoutes from './routes/interviewRoutes';
 import iamRoutes from './routes/iamRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 import { SARVAM_LANGUAGES } from './models/Job';
 
 const app = express();
@@ -42,7 +43,11 @@ app.use(
   })
 );
 
-// Body parsing
+// ── Clerk Webhooks ─────────────────────────────────────────────────────────────
+// IMPORTANT: Must be registered BEFORE express.json() so Svix receives the raw body.
+app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
+
+// Body parsing (all other routes)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
