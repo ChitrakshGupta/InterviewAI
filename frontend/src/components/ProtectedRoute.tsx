@@ -1,11 +1,19 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useUser } from '@clerk/clerk-react';
 
+/**
+ * ProtectedRoute — Clerk-powered route guard.
+ *
+ * Uses Clerk's useUser() to check if the user is signed in.
+ * - While Clerk is loading: show a spinner
+ * - Not signed in: redirect to /login
+ * - Signed in: render children
+ */
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { hr, loading } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
 
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="page-loader">
         <div className="spinner" />
@@ -13,7 +21,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     );
   }
 
-  if (!hr) return <Navigate to="/login" replace />;
+  if (!isSignedIn) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 

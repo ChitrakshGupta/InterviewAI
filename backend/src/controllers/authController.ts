@@ -274,8 +274,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 // GET /api/auth/me
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
-    const hrId = (req as unknown as { hr: { _id: string } }).hr._id;
-    const hr = await HR.findById(hrId);
+    // req.hr is attached by the protect middleware after Clerk token verification
+    const hr = (req as unknown as { hr: typeof HR.prototype }).hr;
     if (!hr) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;

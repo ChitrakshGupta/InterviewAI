@@ -6,7 +6,8 @@ import { uploadToCloudinary, deleteFromCloudinary } from '../services/cloudinary
 // GET /api/hr/profile
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const hr = await HR.findById(req.hr!._id);
+    // req.hr is already loaded and populated by the protect middleware
+    const hr = req.hr;
     if (!hr) {
       res.status(404).json({ success: false, message: 'HR profile not found' });
       return;

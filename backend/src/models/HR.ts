@@ -16,9 +16,12 @@ export type IAMPermission = typeof IAM_PERMISSIONS[number];
 
 export interface IHR extends Document {
   _id: mongoose.Types.ObjectId;
+  /** Clerk's user ID — primary key for session-to-DB lookups */
+  clerkUserId?: string;
   name: string;
   email: string;
-  password: string;
+  /** Optional: Clerk owns credentials; kept for legacy migration only */
+  password?: string;
   companyName: string;
   companyLogo?: string;
   companyLogoPublicId?: string;
@@ -41,6 +44,13 @@ export interface IHR extends Document {
 
 const HRSchema = new Schema<IHR>(
   {
+    /** Clerk user ID — used to look up the HR profile from a Clerk session token */
+    clerkUserId: {
+      type: String,
+      index: true,
+      sparse: true,   // allows multiple docs with no clerkUserId (legacy)
+      default: null,
+    },
     name: {
       type: String,
       required: [true, 'Name is required'],
@@ -53,9 +63,10 @@ const HRSchema = new Schema<IHR>(
       lowercase: true,
       trim: true,
     },
+    /** Optional — Clerk manages credentials; kept for legacy migration */
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: false,
       minlength: 8,
       select: false,
     },
@@ -138,9 +149,9 @@ HRSchema.index(
   }
 );
 
-// Hash password before save
+// Hash password before save (only for legacy local-auth accounts)
 HRSchema.pre<IHR>('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password') || !this.password) return next();
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   next();

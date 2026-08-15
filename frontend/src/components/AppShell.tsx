@@ -2,6 +2,8 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useClerk } from '@clerk/clerk-react';
+
 
 interface NavItemProps {
   to: string;
@@ -22,14 +24,15 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, count }) => (
 );
 
 const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { hr, logout, hasPermission } = useAuth();
+  const { hr, hasPermission } = useAuth();
   const { theme, toggle } = useTheme();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    signOut(() => navigate('/login'));
   };
+
 
   const initials = hr?.name
     ? hr.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
