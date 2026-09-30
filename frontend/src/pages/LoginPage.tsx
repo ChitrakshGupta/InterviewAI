@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSignIn } from '@clerk/clerk-react';
-import { useTheme } from '../context/ThemeContext';
+import AuthLayout from '../components/AuthLayout';
 
 const LoginPage: React.FC = () => {
   const { isLoaded, signIn, setActive } = useSignIn();
-  const { theme, toggle } = useTheme();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -49,21 +48,11 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-box">
-        {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
-          <div className="auth-brand">
-            <div className="auth-brand-mark">H</div>
-            <span className="auth-brand-name">HireAI</span>
-          </div>
-          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
-        </div>
+    <AuthLayout>
+      <h1 className="auth-heading">Sign in</h1>
+      <p className="auth-subheading">Welcome back to your HR portal.</p>
 
-        <h1 className="auth-heading">Sign in</h1>
-        <p className="auth-subheading">Welcome back to your HR portal.</p>
-
-        {error && (
+      {error && (
           <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
             <span>⚠</span> {error}
           </div>
@@ -103,12 +92,11 @@ const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        <p className="auth-footer-text">
-          Don't have an account?{' '}
-          <Link to="/register">Create one</Link>
-        </p>
-      </div>
-    </div>
+      <p className="auth-footer-text">
+        Don't have an account?{' '}
+        <Link to="/register">Create one</Link>
+      </p>
+    </AuthLayout>
   );
 };
 

@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -44,9 +46,19 @@ function App() {
             <Route path="/candidates" element={<ProtectedRoute><CandidatesPage /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
 
+            {/* Landing — public marketing page; signed-in users go straight to the portal */}
+            <Route
+              path="/"
+              element={
+                <>
+                  <SignedOut><LandingPage /></SignedOut>
+                  <SignedIn><Navigate to="/dashboard" replace /></SignedIn>
+                </>
+              }
+            />
+
             {/* Default */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
