@@ -30,8 +30,24 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* Public — HR auth (Clerk powered) */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/login"
+              element={
+                <>
+                  <SignedOut><LoginPage /></SignedOut>
+                  <SignedIn><Navigate to="/dashboard" replace /></SignedIn>
+                </>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <>
+                  <SignedOut><RegisterPage /></SignedOut>
+                  <SignedIn><Navigate to="/dashboard" replace /></SignedIn>
+                </>
+              }
+            />
 
             {/* Candidate facing - fully public, no HR auth required */}
             <Route path="/interview/verify/:token" element={<VerifyPage />} />
