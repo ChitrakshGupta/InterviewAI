@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSignUp } from '@clerk/clerk-react';
-import { useTheme } from '../context/ThemeContext';
+import AuthLayout from '../components/AuthLayout';
 
 type Step = 'form' | 'verify';
 
 const RegisterPage: React.FC = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
-  const { theme, toggle } = useTheme();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>('form');
@@ -87,18 +86,9 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-box">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
-          <div className="auth-brand">
-            <div className="auth-brand-mark">H</div>
-            <span className="auth-brand-name">HireAI</span>
-          </div>
-          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
-        </div>
-
-        {/* ── STEP 2: Email verification code ── */}
-        {step === 'verify' ? (
+    <AuthLayout>
+      {/* ── STEP 2: Email verification code ── */}
+      {step === 'verify' ? (
           <>
             <div style={{ textAlign: 'center', padding: '0.5rem 0 1.5rem' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📩</div>
@@ -223,8 +213,7 @@ const RegisterPage: React.FC = () => {
             </p>
           </>
         )}
-      </div>
-    </div>
+    </AuthLayout>
   );
 };
 
